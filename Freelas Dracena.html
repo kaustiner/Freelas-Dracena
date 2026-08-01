@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Content-Security-Policy: restringe de onde o site pode carregar scripts/estilos/imagens
+     e de onde ele pode fazer chamadas (connect-src), como camada extra contra XSS. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.tile.openstreetmap.org; connect-src 'self' https://script.google.com https://script.googleusercontent.com; base-uri 'self'; form-action 'none';">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Freelas Dracena — Dracena SP</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAFAFA;
+    --paper-2:#EBEBEB;
+    --ink:#141414;
+    --ink-soft:#59595C;
+    --green:#9146FF;
+    --green-deep:#170A26;
+    --brick:#A3001A;
+    --gold:#D2001F;
+    --line: rgba(20,20,20,0.14);
+    --white:#FFFFFF;
+    --radius: 14px;
+    --nav-mobile: 66px;
+    --nav-desktop: 58px;
+    --legend-gap: 82px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    overflow:hidden;
+  }
+  h1,h2,h3,.brand,.btn,.tab{font-family:'Space Grotesk',sans-serif;}
+
+  #app{height:100vh;display:flex;}
+  #main-content{
+    flex:1;display:flex;flex-direction:column;min-width:0;
+    padding-bottom:var(--nav-mobile);
+  }
+
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px;
+    background:var(--green-deep);
+    color:var(--white);
+    flex-shrink:0;
+    z-index:20;
+  }
+  .brand{font-size:19px;font-weight:700;letter-spacing:-0.01em;display:flex;align-items:center;gap:8px;}
+  .brand-mark{
+    width:28px;height:28px;border-radius:8px;background:var(--gold);
+    display:flex;align-items:center;justify-content:center;color:var(--white);font-weight:700;font-size:13px;
+  }
+  .brand small{display:block;font-family:'Inter';font-weight:400;font-size:11px;color:#C9CFC1;letter-spacing:.02em;}
+  .header-profile-btn{
+    width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;
+    background:rgba(255,255,255,0.1);color:var(--white);font-size:17px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .header-profile-btn:hover{background:rgba(255,255,255,0.18);}
+
+  .btn{
+    border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:600;
+    cursor:pointer;transition:transform .12s ease, opacity .12s ease;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--gold);color:var(--white);}
+  .btn-primary:hover{opacity:.92;}
+  .btn-secondary{background:var(--paper-2);color:var(--ink);}
+
+  #map-wrap{position:relative;flex:1;}
+  #map{position:absolute;inset:0;z-index:1;}
+
+  .filter-chip{
+    position:absolute;top:14px;left:14px;right:14px;z-index:900;
+    background:var(--white);padding:9px 10px 9px 14px;border-radius:999px;
+    font-size:13px;font-weight:600;color:var(--green-deep);
+    box-shadow:0 2px 10px rgba(0,0,0,0.12);
+    display:flex;align-items:center;gap:8px;max-width:420px;
+  }
+  .filter-chip span#filter-chip-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+  .count-badge{
+    background:var(--green);color:var(--white);font-size:11px;font-weight:700;
+    padding:3px 9px;border-radius:7px;min-width:20px;text-align:center;flex-shrink:0;
+  }
+  .filter-chip button{
+    border:none;background:var(--paper-2);width:20px;height:20px;border-radius:50%;
+    cursor:pointer;font-size:11px;line-height:1;color:var(--ink-soft);flex-shrink:0;
+  }
+
+  .legend{
+    position:absolute;bottom:var(--legend-gap);left:14px;z-index:900;
+    background:var(--white);border-radius:12px;padding:14px 20px;
+    border:2px solid #000000;
+    box-shadow:0 2px 10px rgba(0,0,0,0.12);
+    font-size:14.5px;color:var(--ink-soft);
+  }
+  .legend div{display:flex;align-items:center;gap:10px;margin:6px 0;}
+  .dot{width:13px;height:13px;border-radius:50%;display:inline-block;flex-shrink:0;}
+
+  .app-nav{
+    position:fixed;left:0;right:0;bottom:0;height:var(--nav-mobile);
+    background:var(--green-deep);
+    display:flex;align-items:center;
+    z-index:950;box-shadow:0 -2px 14px rgba(0,0,0,0.18);
+    padding:0 8px;
+  }
+  .nav-side{
+    flex:1 1 0;min-width:0;
+    display:flex;align-items:center;height:100%;
+  }
+  .nav-side.nav-left{justify-content:center;}
+  .nav-side.nav-right{justify-content:space-around;}
+  .nav-btn{
+    background:none;border:none;color:#B9C1AE;display:flex;flex-direction:column;
+    align-items:center;gap:3px;font-family:'Space Grotesk';font-size:10px;font-weight:600;
+    cursor:pointer;padding:6px 8px;letter-spacing:.01em;text-align:center;
+  }
+  .nav-btn .nav-icon{font-size:19px;line-height:1;}
+  .nav-btn:hover{color:var(--white);}
+  .nav-btn-center{
+    position:absolute;left:50%;top:-19px;transform:translateX(-50%);
+    background:var(--gold);color:var(--white);
+    width:56px;height:56px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 16px rgba(210,0,31,0.5);
+    font-size:23px;padding:0;
+  }
+  .nav-btn-center .nav-label{display:none;}
+  .nav-btn-center:hover{color:var(--white);transform:translateX(-50%) translateY(-1px);}
+
+  @media (min-width: 860px){
+    :root{ --legend-gap:96px; }
+    .app-nav{
+      left:50%;right:auto;bottom:18px;
+      transform:translateX(-50%);
+      width:auto;height:var(--nav-desktop);
+      border-radius:999px;padding:0 10px;gap:6px;
+      box-shadow:0 8px 24px rgba(23,15,32,0.28);
+      display:flex;justify-content:center;
+    }
+    .nav-side{ display:contents; }
+    .nav-btn{padding:6px 16px;flex-direction:row;gap:8px;font-size:10.5px;}
+    .nav-btn .nav-icon{font-size:16px;}
+    .nav-btn-center{
+      position:static;transform:none;
+      width:44px;height:44px;margin:0 4px;font-size:18px;
+      box-shadow:0 4px 12px rgba(210,0,31,0.5);
+    }
+    .nav-btn-center:hover{transform:translateY(-1px);}
+    .filter-chip{max-width:460px;}
+  }
+
+  .overlay{
+    position:fixed;inset:0;background:rgba(20,24,18,0.55);
+    display:flex;align-items:center;justify-content:center;z-index:1000;
+    padding:20px;
+  }
+  .modal{
+    background:var(--paper);border-radius:18px;max-width:440px;width:100%;
+    max-height:88vh;overflow-y:auto;
+    box-shadow:0 20px 60px rgba(0,0,0,0.3);
+  }
+  .modal-head{
+    padding:20px 22px 14px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:flex-start;
+  }
+  .modal-head h2{margin:0 0 4px;font-size:19px;color:var(--green-deep);}
+  .modal-head p{margin:0;font-size:12.5px;color:var(--ink-soft);}
+  .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);padding:2px 6px;}
+  .modal-body{padding:20px 22px 22px;}
+
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--green-deep);margin-bottom:6px;letter-spacing:.01em;}
+  .field input, .field textarea, .field select{
+    width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--line);
+    background:var(--white);font-family:'Inter';font-size:14px;color:var(--ink);outline:none;
+  }
+  .field input:focus, .field textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(210,0,31,0.28);}
+  .field textarea{resize:vertical;min-height:70px;}
+  .field small{display:block;margin-top:5px;font-size:11.5px;color:var(--ink-soft);}
+
+  .toggle-row{display:flex;gap:10px;}
+  .toggle-opt{
+    flex:1;border:1.5px solid var(--line);border-radius:10px;padding:12px;text-align:center;
+    cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-soft);background:var(--white);
+  }
+  .toggle-opt.active{border-color:var(--green);background:rgba(145,70,255,0.1);color:var(--green-deep);}
+
+  .submit-row{margin-top:6px;display:flex;gap:10px;}
+  .submit-row .btn{flex:1;}
+
+  .status-line{font-size:12.5px;color:var(--ink-soft);margin-top:8px;min-height:16px;}
+  .status-line.error{color:var(--brick);}
+  .status-line.ok{color:var(--green);}
+
+  .tag{
+    display:inline-block;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;
+    letter-spacing:.02em;text-transform:uppercase;
+  }
+  .tag.oferece{background:rgba(145,70,255,0.15);color:var(--green);}
+  .tag.contrata{background:rgba(210,0,31,0.13);color:var(--brick);}
+  .profile-desc{
+    background:var(--white);border-radius:10px;padding:14px;font-size:13.5px;
+    line-height:1.55;color:var(--ink);margin:14px 0;border:1px solid var(--line);
+  }
+  .whatsapp-btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+    background:var(--brick);color:#fff;padding:13px;border-radius:10px;border:none;
+    font-family:'Space Grotesk';font-weight:700;font-size:14.5px;cursor:pointer;
+  }
+  .whatsapp-btn:hover{opacity:.9;}
+  .instagram-btn{background:#C13584;}
+
+  .suggestions-list{display:flex;flex-direction:column;gap:7px;max-height:280px;overflow-y:auto;}
+  .suggestion-item{
+    text-align:left;background:var(--white);border:1px solid var(--line);border-radius:9px;
+    padding:11px 13px;font-size:13.5px;cursor:pointer;color:var(--ink);
+    display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:'Inter';
+  }
+  .suggestion-item:hover{border-color:var(--gold);}
+  .suggestion-item .s-count{
+    font-size:11px;color:var(--ink-soft);background:var(--paper-2);padding:3px 9px;
+    border-radius:999px;flex-shrink:0;white-space:nowrap;
+  }
+  .suggestions-empty{font-size:12.5px;color:var(--ink-soft);padding:10px 2px;line-height:1.5;}
+
+  .my-listing-item{
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+    background:var(--white);border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px;font-size:13px;
+  }
+  .my-listing-item .ml-info{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .my-listing-item .ml-prof{font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .my-listing-item .ml-meta{font-size:11px;color:var(--ink-soft);}
+  .my-listing-item .ml-meta.expired{color:var(--brick);}
+  .ml-del{
+    flex-shrink:0;border:none;background:rgba(210,0,31,0.1);color:var(--brick);
+    border-radius:7px;padding:7px 10px;font-size:12px;font-weight:600;cursor:pointer;
+  }
+  .ml-del:hover{background:rgba(210,0,31,0.18);}
+  .ml-actions{display:flex;gap:6px;flex-shrink:0;}
+  .ml-edit{
+    border:none;background:rgba(145,70,255,0.12);color:var(--green);
+    border-radius:7px;padding:7px 10px;font-size:12px;font-weight:600;cursor:pointer;
+  }
+  .ml-edit:hover{background:rgba(145,70,255,0.2);}
+
+  .type-filter{display:flex;gap:8px;margin-bottom:14px;}
+  .type-filter-btn{
+    flex:1;border:1.5px solid var(--line);background:var(--white);color:var(--ink-soft);
+    border-radius:10px;padding:9px 6px;font-family:'Space Grotesk';font-size:12px;
+    font-weight:700;cursor:pointer;text-align:center;transition:all .15s;
+  }
+  .type-filter-btn.active{background:var(--ink);color:var(--white);border-color:var(--ink);}
+  .type-filter-btn:hover:not(.active){border-color:var(--ink);}
+
+  .account-row{display:flex;flex-direction:column;gap:2px;}
+  .account-row .a-label{font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;margin-top:10px;}
+  .account-row .a-value{font-size:15px;font-weight:600;color:var(--green-deep);}
+
+  #login-screen{
+    position:fixed;inset:0;background:var(--green-deep);z-index:2000;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .login-card{
+    background:var(--paper);border-radius:20px;max-width:380px;width:100%;padding:32px 28px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.35);
+  }
+  .login-mark{
+    width:44px;height:44px;border-radius:12px;background:var(--gold);
+    display:flex;align-items:center;justify-content:center;color:var(--white);
+    font-weight:700;font-size:20px;margin-bottom:16px;
+  }
+  .login-card h1{font-size:22px;margin:0 0 6px;color:var(--green-deep);}
+  .login-card p{font-size:13.5px;color:var(--ink-soft);margin:0 0 22px;line-height:1.5;}
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
+
+  .leaflet-popup-content-wrapper{border-radius:10px;}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-mark">DT</div>
+    <h1>Freelas Dracena</h1>
+    <p>Uma rede local de Dracena-SP para quem procura trabalho e quem está contratando. Sem chat, sem enrolação — só perfil, mapa e WhatsApp.</p>
+    <div class="field">
+      <label>Nome e sobrenome</label>
+      <input id="login-nome" type="text" placeholder="Ex: Alexandre Andrade" />
+    </div>
+    <div class="field">
+      <label>Telefone (WhatsApp)</label>
+      <input id="login-tel" type="text" placeholder="(18) 99999-9999" />
+    </div>
+    <div class="status-line error" id="login-error"></div>
+    <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Entrar</button>
+    <p style="font-size:11px;color:var(--ink-soft);margin:12px 0 0;text-align:center;">Seus dados ficam salvos só neste aparelho, pra não pedir de novo.</p>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <div id="main-content">
+    <header>
+      <div class="brand">
+        <div class="brand-mark">DT</div>
+        <div>
+          Freelas Dracena
+          <small>Dracena • SP</small>
+        </div>
+      </div>
+      <button class="header-profile-btn" onclick="openAccountPanel()" aria-label="Perfil">👤</button>
+    </header>
+
+    <div id="map-wrap">
+      <div id="map"></div>
+      <div class="filter-chip" id="filter-chip" style="display:none">
+        <span id="filter-chip-text"></span>
+        <span class="count-badge" id="count-badge">0</span>
+        <button onclick="clearSearch()">✕</button>
+      </div>
+      <div class="legend">
+        <div><span class="dot" style="background:#9146FF"></span> Oferece serviço</div>
+        <div><span class="dot" style="background:#D2001F"></span> Está contratando</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="app-nav">
+    <div class="nav-side nav-left">
+      <button class="nav-btn" onclick="openForm('oferece')">
+        <span class="nav-icon">💼</span><span class="nav-label">Procurar emprego</span>
+      </button>
+    </div>
+    <button class="nav-btn nav-btn-center" onclick="openSearchPanel()" aria-label="Buscar">
+      <span class="nav-icon">🔍</span>
+    </button>
+    <div class="nav-side nav-right">
+      <button class="nav-btn" onclick="openForm('contrata')">
+        <span class="nav-icon">🔧</span><span class="nav-label">Procurar trabalhador</span>
+      </button>
+    </div>
+  </nav>
+</div>
+
+<div class="overlay" id="form-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="form-title">Anunciar meu serviço</h2>
+        <p id="form-subtitle">Você aparece no mapa só pra quem pesquisar sua profissão.</p>
+      </div>
+      <button class="modal-close" onclick="closeForm()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label id="lbl-profissao">Sua profissão</label>
+        <input id="f-profissao" type="text" maxlength="60" placeholder="Ex: Arquiteto, Pedreiro, Diarista..." />
+      </div>
+      <div class="field">
+        <label id="lbl-nome">Nome e sobrenome</label>
+        <input id="f-nome" type="text" maxlength="60" />
+      </div>
+      <div class="field">
+        <label>Telefone (WhatsApp)</label>
+        <input id="f-tel" type="text" placeholder="(18) 99999-9999" />
+      </div>
+      <div class="field" id="cep-field">
+        <label>CEP (só de Dracena-SP)</label>
+        <input id="f-cep" type="text" placeholder="17900-000" maxlength="9" />
+        <small id="cep-status"></small>
+      </div>
+      <!-- campo-armadilha para bots: fica invisível pra gente, mas bots que preenchem tudo
+           automaticamente costumam preencher também. Se vier preenchido, o servidor recusa. -->
+      <div style="position:absolute;left:-9999px;top:-9999px;" aria-hidden="true">
+        <label for="f-website">Não preencha este campo</label>
+        <input id="f-website" type="text" name="website" tabindex="-1" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label id="lbl-desc">Currículo resumido</label>
+        <textarea id="f-desc" maxlength="500" placeholder="Ex: 8 anos de experiência em projetos residenciais, atendo reformas e construções novas."></textarea>
+      </div>
+      <div class="field">
+        <label>Instagram (opcional)</label>
+        <input id="f-instagram" type="text" maxlength="31" placeholder="@seuusuario" />
+        <small>Se preencher, aparece um botão no seu perfil pra abrir o Instagram direto.</small>
+      </div>
+      <div class="status-line error" id="form-error"></div>
+      <div class="submit-row">
+        <button class="btn btn-secondary" onclick="closeForm()">Cancelar</button>
+        <button class="btn btn-primary" id="submit-btn" onclick="submitListing()">Publicar no mapa</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="profile-overlay" style="display:none">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-head">
+      <div>
+        <span class="tag" id="profile-tag"></span>
+        <h2 style="margin-top:8px" id="profile-nome"></h2>
+        <p id="profile-profissao"></p>
+      </div>
+      <button class="modal-close" onclick="closeProfile()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="profile-desc" id="profile-desc"></div>
+      <button class="whatsapp-btn" id="profile-whatsapp">📱 Chamar no WhatsApp</button>
+      <button class="whatsapp-btn instagram-btn" id="profile-instagram" style="display:none;margin-top:8px">📷 Ver Instagram</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="search-overlay" style="display:none">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <div>
+        <h2>Buscar no mapa</h2>
+        <p>Digite a profissão. Só aparece quem tem a ver com sua busca.</p>
+      </div>
+      <button class="modal-close" onclick="closeSearchPanel()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="type-filter" id="type-filter">
+        <button type="button" class="type-filter-btn" data-tipo="contrata" onclick="setTypeFilter('contrata')">Procuro trabalho</button>
+        <button type="button" class="type-filter-btn" data-tipo="oferece" onclick="setTypeFilter('oferece')">Procuro trabalhador</button>
+      </div>
+      <div class="field" style="margin-bottom:12px">
+        <input id="search-input" type="text" placeholder="Ex: eletricista, diarista, programador..." oninput="onSearchInput()" autocomplete="off" />
+      </div>
+      <div class="suggestions-list" id="search-suggestions"></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:14px" onclick="applySearchAndClose()">Ver no mapa</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="account-overlay" style="display:none">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-head">
+      <div>
+        <h2>Sua conta</h2>
+        <p>Dados usados para preencher seus cadastros.</p>
+      </div>
+      <button class="modal-close" onclick="closeAccountPanel()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="account-row">
+        <span class="a-label">Nome</span>
+        <span class="a-value" id="acc-nome">—</span>
+        <span class="a-label">Telefone</span>
+        <span class="a-value" id="acc-tel">—</span>
+      </div>
+      <div class="a-label" style="margin-top:18px">Meus anúncios</div>
+      <p style="font-size:11.5px;color:var(--ink-soft);margin:2px 0 8px;">Todo anúncio é grátis por 30 dias. Depois disso, some do mapa e precisa ser refeito — a menos que peça pra deixar permanente.</p>
+      <div class="suggestions-list" id="my-listings" style="margin-top:8px"></div>
+      <div class="submit-row" style="margin-top:22px">
+        <button class="btn btn-secondary" style="width:100%" onclick="logout()">Sair</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DRACENA_CENTER = [-21.4861, -51.5350];
+const DRACENA_BOUNDS = L.latLngBounds(
+  [-21.545, -51.605],
+  [-21.425, -51.465]
+);
+// COLE AQUI o link do seu Web App do Google Apps Script (termina em /exec)
+const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbx8bEVQxPU6x7FVyWK8ataB1v1UUZUrPRDFRN7EhBrutrrn7JIxHn-vI7sdgYdriDqUlQ/exec';
+const VAGA_EXPIRA_DIAS = 30; // depois disso, qualquer anúncio some do mapa — a menos que esteja marcado como "permanente" na planilha
+
+let currentUser = null;
+let map, markersLayer;
+let listings = [];
+let currentTipo = 'oferece';
+let editingId = null;
+let typeFilter = ''; // '' = todos, 'contrata' = procuro trabalho, 'oferece' = procuro trabalhador
+
+function sanitizeInstagram(handle){
+  const h = (handle || '').trim().replace(/^@+/, '').toLowerCase();
+  if(!/^[a-z0-9._]{1,30}$/.test(h)) return '';
+  return h;
+}
+
+const SYNONYMS = {
+  arquiteto: ['arquitetura','projetista','projeto'],
+  pedreiro: ['construcao','construtor','alvenaria','reforma','obra'],
+  eletricista: ['eletrica','instalacao eletrica','fiacao'],
+  encanador: ['hidraulica','bombeiro hidraulico','vazamento'],
+  diarista: ['faxina','limpeza','domestica','faxineira'],
+  professor: ['aula','reforco','educador','professora'],
+  advogado: ['direito','juridico','advogada'],
+  contador: ['contabilidade','contadora'],
+  cabeleireiro: ['cabelo','salao','cabeleireira'],
+  manicure: ['unha','unhas'],
+  motorista: ['frete','transporte','carreto'],
+  mecanico: ['mecanica','oficina','carro','automovel'],
+  pintor: ['pintura','pintora'],
+  jardineiro: ['jardim','paisagismo','jardinagem'],
+  cozinheiro: ['cozinha','culinaria','cozinheira','chef'],
+  vendedor: ['vendas','vendedora','comercial'],
+  babá: ['baba','cuidadora','cuidador de criancas'],
+  cuidador: ['cuidadora','idoso','acompanhante'],
+  programador: ['desenvolvedor','developer','ti','informatica','sistemas','software'],
+  pizzaiolo: ['pizza','forno de pizza','pizzaria']
+};
+
+function escapeHtml(str){
+  return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[c]));
+}
+function norm(s){
+  return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+}
+function digitsOnly(s){ return (s||'').replace(/\D/g,''); }
+function jitter(val){ return val + (Math.random()-0.5)*0.006; }
+function capitalize(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+
+function matchesQuery(listing, q){
+  if(!q) return true;
+  const nq = norm(q);
+  const nProf = norm(listing.profissao);
+  const nDesc = norm(listing.descricao);
+
+  if(nProf.includes(nq)) return true;
+
+  for(const [key, syns] of Object.entries(SYNONYMS)){
+    const terms = [norm(key), ...syns.map(norm)];
+    const queryInGroup = terms.some(t => t === nq || (nq.length > 2 && t.includes(nq)));
+    const listingInGroup = terms.some(t => nProf.includes(t));
+    if(queryInGroup && listingInGroup) return true;
+  }
+
+  const descWords = nDesc.split(/[^a-z0-9]+/).filter(Boolean);
+  const queryWords = nq.split(/\s+/).filter(w => w.length > 2);
+  return queryWords.length > 0 && queryWords.every(w => descWords.includes(w));
+}
+
+function buildProfessionList(){
+  const set = new Set();
+  Object.keys(SYNONYMS).forEach(k => set.add(capitalize(k)));
+  getActiveListings().filter(l => !typeFilter || l.tipo === typeFilter).forEach(l => set.add(l.profissao));
+  return Array.from(set);
+}
+
+async function loadListings(){
+  try{
+    const res = await fetch(`${SHEET_API_URL}?action=list`);
+    const data = await res.json();
+    listings = (data && data.ok && Array.isArray(data.listings)) ? data.listings : [];
+  }catch(e){
+    console.error('Erro ao carregar anúncios da planilha:', e);
+    listings = [];
+  }
+}
+
+// Traduz os códigos de erro que vêm do servidor (Apps Script) pra mensagens
+// mais claras pro usuário final. Se não reconhecer o código, mostra o texto
+// cru que veio do servidor mesmo assim (melhor que uma mensagem genérica).
+function friendlyServerError_(raw){
+  const map = {
+    'telefone inválido': 'Telefone inválido — digite DDD + número (10 ou 11 dígitos, só números).',
+    'CEP inválido': 'CEP inválido — deve ter 8 dígitos.',
+    'CEP fora da área de Dracena-SP': 'Esse CEP está fora da área de Dracena-SP.',
+    'campos obrigatórios ausentes': 'Preencha profissão, nome e descrição antes de publicar.',
+    'Instagram inválido': 'Instagram inválido — use só letras, números, ponto ou underline, sem @.',
+    'coordenadas inválidas': 'Não consegui calcular a localização a partir do CEP informado.',
+    'anúncio não encontrado': 'Esse anúncio não existe mais (pode já ter sido apagado).',
+    'id ausente': 'Não consegui identificar qual anúncio alterar. Recarregue a página e tente de novo.',
+    'token de edição ausente': 'Este anúncio não foi criado neste aparelho/navegador, então não é possível alterá-lo por aqui.',
+    'você não tem permissão para editar este anúncio': 'Este anúncio não foi criado neste aparelho/navegador, então não é possível editá-lo por aqui.',
+    'você não tem permissão para apagar este anúncio': 'Este anúncio não foi criado neste aparelho/navegador, então não é possível apagá-lo por aqui.',
+    'erro interno': 'Deu um erro inesperado no servidor. Tente de novo em instantes.',
+  };
+  return map[raw] || raw || null;
+}
+
+async function callApi_(action, body){
+  let res, data;
+  try{
+    res = await fetch(SHEET_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS
+      body: JSON.stringify({ action, ...body })
+    });
+    data = await res.json();
+  }catch(e){
+    // erro de rede, CORS, ou resposta que não era JSON (ex: página de erro do Google)
+    throw new Error('Não consegui conectar ao servidor. Confira sua conexão e tente de novo.');
+  }
+  if(!data.ok){
+    throw new Error(friendlyServerError_(data.error) || 'Não consegui salvar. Tente de novo.');
+  }
+  return data;
+}
+
+async function addListingRemote(listing){
+  const honeypot = document.getElementById('f-website') ? document.getElementById('f-website').value : '';
+  const data = await callApi_('add', { listing: { ...listing, website: honeypot } });
+  saveToken_(data.id, data.token); // guarda a permissão de editar/apagar só neste navegador
+  return data.id; // o servidor gera o id de verdade — nunca confiamos no id local
+}
+
+async function editListingRemote(id, listing){
+  const token = getToken_(id);
+  if(!token) throw new Error('Este anúncio não foi criado neste aparelho/navegador, então não é possível editá-lo por aqui.');
+  await callApi_('edit', { id, token, listing });
+}
+
+async function deleteListingRemote(id){
+  const token = getToken_(id);
+  if(!token) throw new Error('Este anúncio não foi criado neste aparelho/navegador, então não é possível apagá-lo por aqui.');
+  await callApi_('delete', { id, token });
+  removeToken_(id);
+}
+
+function isPermanent(l){
+  return l.permanente === true || l.permanente === 'TRUE' || l.permanente === 'true';
+}
+function isExpired(l){
+  if(isPermanent(l)) return false;
+  if(!l.created_at) return false;
+  const created = new Date(l.created_at).getTime();
+  if(isNaN(created)) return false;
+  const days = (Date.now() - created) / (1000*60*60*24);
+  return days > VAGA_EXPIRA_DIAS;
+}
+function daysLeft(l){
+  if(!l.created_at) return null;
+  const created = new Date(l.created_at).getTime();
+  if(isNaN(created)) return null;
+  return Math.ceil(VAGA_EXPIRA_DIAS - (Date.now() - created) / (1000*60*60*24));
+}
+
+function getActiveListings(){
+  return listings.filter(l => !isExpired(l));
+}
+
+const REMEMBER_KEY = 'mapaTrabalho_user';
+const TOKENS_KEY = 'mapaTrabalho_tokens';
+
+// Cada anúncio criado neste navegador guarda um "token de edição" só seu,
+// devolvido pelo servidor uma única vez, no momento da criação. É esse
+// token (e não o telefone, que é público) que prova que o anúncio é seu.
+function loadTokens_(){
+  try{ return JSON.parse(localStorage.getItem(TOKENS_KEY) || '{}'); }
+  catch(e){ return {}; }
+}
+function saveToken_(id, token){
+  if(!id || !token) return;
+  try{
+    const t = loadTokens_();
+    t[id] = token;
+    localStorage.setItem(TOKENS_KEY, JSON.stringify(t));
+  }catch(e){ /* localStorage pode estar bloqueado (ex: modo anônimo) — ignora silenciosamente */ }
+}
+function getToken_(id){
+  return loadTokens_()[id] || null;
+}
+function removeToken_(id){
+  try{
+    const t = loadTokens_();
+    delete t[id];
+    localStorage.setItem(TOKENS_KEY, JSON.stringify(t));
+  }catch(e){}
+}
+
+function saveRememberedUser(nome, tel){
+  try{ localStorage.setItem(REMEMBER_KEY, JSON.stringify({ nome, tel })); }
+  catch(e){ /* localStorage pode estar bloqueado (ex: modo anônimo) — ignora silenciosamente */ }
+}
+function loadRememberedUser(){
+  try{
+    const raw = localStorage.getItem(REMEMBER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function clearRememberedUser(){
+  try{ localStorage.removeItem(REMEMBER_KEY); }catch(e){}
+}
+
+function enterApp(nome, tel){
+  currentUser = { nome, tel };
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('f-nome').value = nome;
+  document.getElementById('f-tel').value = tel;
+  document.getElementById('acc-nome').textContent = nome;
+  document.getElementById('acc-tel').textContent = tel;
+  initMap();
+}
+
+function doLogin(){
+  const nome = document.getElementById('login-nome').value.trim();
+  const tel = document.getElementById('login-tel').value.trim();
+  const err = document.getElementById('login-error');
+  if(nome.split(' ').filter(Boolean).length < 2){
+    err.textContent = 'Digite nome e sobrenome.';
+    return;
+  }
+  if(digitsOnly(tel).length < 10){
+    err.textContent = 'Digite um telefone válido com DDD.';
+    return;
+  }
+  err.textContent = '';
+  saveRememberedUser(nome, tel);
+  enterApp(nome, tel);
+}
+function logout(){
+  currentUser = null;
+  clearRememberedUser();
+  closeAccountPanel();
+  document.getElementById('login-nome').value = '';
+  document.getElementById('login-tel').value = '';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+
+(function tryAutoLogin(){
+  const remembered = loadRememberedUser();
+  if(remembered && remembered.nome && remembered.tel){
+    enterApp(remembered.nome, remembered.tel);
+  }
+})();
+
+function initMap(){
+  map = L.map('map', {
+    zoomControl: true,
+    minZoom: 12,
+    maxZoom: 18,
+    maxBounds: DRACENA_BOUNDS,
+    maxBoundsViscosity: 1.0,
+    worldCopyJump: false
+  }).setView(DRACENA_CENTER, 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap',
+    maxZoom: 18,
+    minZoom: 12,
+    bounds: DRACENA_BOUNDS
+  }).addTo(map);
+  map.setMaxBounds(DRACENA_BOUNDS);
+  markersLayer = L.layerGroup().addTo(map);
+  loadListings().then(renderMap);
+}
+
+function iconFor(tipo){
+  const color = tipo === 'contrata' ? '#D2001F' : '#9146FF';
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:22px;height:22px;border-radius:50% 50% 50% 0;background:${color};transform:rotate(-45deg);border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
+    iconSize: [22,22],
+    iconAnchor: [11,22]
+  });
+}
+
+function renderMap(){
+  const q = (document.getElementById('search-input').value || '').trim();
+  const chip = document.getElementById('filter-chip');
+  const chipText = document.getElementById('filter-chip-text');
+  const badge = document.getElementById('count-badge');
+
+  markersLayer.clearLayers();
+  const visible = getActiveListings().filter(l => (!typeFilter || l.tipo === typeFilter) && matchesQuery(l, q));
+
+  visible.forEach(l => {
+    const marker = L.marker([l.lat, l.lng], {icon: iconFor(l.tipo)});
+    marker.on('click', () => openProfile(l));
+    marker.addTo(markersLayer);
+  });
+
+  const typeLabel = typeFilter === 'contrata' ? 'Procuro trabalho' : (typeFilter === 'oferece' ? 'Procuro trabalhador' : '');
+  if(q || typeFilter){
+    chip.style.display = 'flex';
+    chipText.textContent = q ? `"${q}"${typeLabel ? ' · ' + typeLabel : ''}` : typeLabel;
+    badge.textContent = visible.length;
+  } else {
+    chip.style.display = 'none';
+  }
+}
+
+function clearSearch(){
+  document.getElementById('search-input').value = '';
+  typeFilter = '';
+  updateTypeFilterUI();
+  renderMap();
+}
+
+function setTypeFilter(tipo){
+  typeFilter = (typeFilter === tipo) ? '' : tipo;
+  updateTypeFilterUI();
+  renderMap();
+  renderSuggestions(document.getElementById('search-input').value);
+}
+function updateTypeFilterUI(){
+  document.querySelectorAll('.type-filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tipo === typeFilter);
+  });
+}
+
+function openSearchPanel(){
+  document.getElementById('search-overlay').style.display = 'flex';
+  updateTypeFilterUI();
+  renderSuggestions(document.getElementById('search-input').value);
+  setTimeout(() => document.getElementById('search-input').focus(), 50);
+}
+function closeSearchPanel(){
+  document.getElementById('search-overlay').style.display = 'none';
+}
+function onSearchInput(){
+  renderMap();
+  renderSuggestions(document.getElementById('search-input').value);
+}
+function applySearchAndClose(){
+  renderMap();
+  closeSearchPanel();
+}
+function selectSuggestion(term){
+  document.getElementById('search-input').value = term;
+  renderMap();
+  closeSearchPanel();
+}
+function renderSuggestions(q){
+  const box = document.getElementById('search-suggestions');
+  const nq = norm(q);
+  const all = buildProfessionList();
+  let matches = nq ? all.filter(p => norm(p).includes(nq)) : all;
+  matches = matches.slice(0, 8);
+
+  box.innerHTML = '';
+  if(matches.length === 0){
+    box.innerHTML = '<div class="suggestions-empty">Nenhuma profissão parecida cadastrada ainda. Você ainda pode buscar por esse termo — toque em "Ver no mapa".</div>';
+    return;
+  }
+  matches.forEach(p => {
+    const count = getActiveListings().filter(l => (!typeFilter || l.tipo === typeFilter) && matchesQuery(l, p)).length;
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'suggestion-item';
+    row.innerHTML = `<span>${escapeHtml(p)}</span><span class="s-count">${count} ${count === 1 ? 'encontrado' : 'encontrados'}</span>`;
+    row.onclick = () => selectSuggestion(p);
+    box.appendChild(row);
+  });
+}
+
+function openAccountPanel(){
+  document.getElementById('account-overlay').style.display = 'flex';
+  renderMyListings();
+}
+function closeAccountPanel(){
+  document.getElementById('account-overlay').style.display = 'none';
+}
+function renderMyListings(){
+  const box = document.getElementById('my-listings');
+  if(!currentUser){ box.innerHTML = ''; return; }
+  const mine = listings.filter(l => !!getToken_(l.id));
+
+  box.innerHTML = '';
+  if(mine.length === 0){
+    box.innerHTML = '<div class="suggestions-empty">Você ainda não publicou nenhum anúncio.</div>';
+    return;
+  }
+  mine.forEach(l => {
+    const expired = isExpired(l);
+    const permanent = isPermanent(l);
+    let statusText;
+    if(permanent) statusText = 'Permanente ✓';
+    else if(expired) statusText = 'Expirado, some do mapa';
+    else {
+      const d = daysLeft(l);
+      statusText = (d != null && d >= 0) ? `Expira em ${d} dia${d === 1 ? '' : 's'}` : 'Ativo';
+    }
+    const row = document.createElement('div');
+    row.className = 'my-listing-item';
+    row.innerHTML = `
+      <div class="ml-info">
+        <span class="ml-prof">${escapeHtml(l.profissao)}${l.tipo === 'contrata' ? ' (vaga)' : ''}</span>
+        <span class="ml-meta${expired ? ' expired' : ''}">${statusText}</span>
+      </div>
+      <div class="ml-actions">
+        <button class="ml-edit">Editar</button>
+        <button class="ml-del">Apagar</button>
+      </div>
+    `;
+    row.querySelector('.ml-edit').onclick = () => openEditForm(l);
+    row.querySelector('.ml-del').onclick = () => removeListing(l.id);
+    box.appendChild(row);
+  });
+}
+
+function openForm(tipo){
+  editingId = null;
+  currentTipo = tipo || 'oferece';
+  setTipo(currentTipo);
+  document.getElementById('form-overlay').style.display = 'flex';
+  document.getElementById('form-error').textContent = '';
+  document.getElementById('cep-status').textContent = '';
+}
+function openEditForm(l){
+  editingId = l.id;
+  currentTipo = l.tipo;
+  setTipo(l.tipo);
+  document.getElementById('form-title').textContent = l.tipo === 'oferece' ? 'Editar meu serviço' : 'Editar vaga';
+  document.getElementById('submit-btn').textContent = 'Salvar alterações';
+  document.getElementById('f-profissao').value = l.profissao || '';
+  document.getElementById('f-nome').value = l.nome || '';
+  document.getElementById('f-tel').value = currentUser ? currentUser.tel : (l.telefone || '');
+  document.getElementById('f-cep').value = l.cep || '';
+  document.getElementById('f-desc').value = l.descricao || '';
+  document.getElementById('f-instagram').value = l.instagram ? '@' + l.instagram : '';
+  document.getElementById('form-overlay').style.display = 'flex';
+  document.getElementById('form-error').textContent = '';
+  document.getElementById('cep-status').textContent = '';
+  closeAccountPanel();
+}
+function closeForm(){
+  editingId = null;
+  document.getElementById('form-overlay').style.display = 'none';
+}
+function setTipo(tipo){
+  currentTipo = tipo;
+  const isOferece = tipo === 'oferece';
+  document.getElementById('form-title').textContent = isOferece ? 'Anunciar meu serviço' : 'Publicar uma vaga';
+  document.getElementById('form-subtitle').textContent = isOferece
+    ? 'Você aparece no mapa só pra quem pesquisar sua profissão.'
+    : 'Sua vaga aparece no mapa só pra quem pesquisar essa profissão.';
+  document.getElementById('lbl-profissao').textContent = isOferece ? 'Sua profissão' : 'Profissão que você procura';
+  document.getElementById('lbl-nome').textContent = isOferece ? 'Nome e sobrenome' : 'Nome (seu ou da empresa)';
+  document.getElementById('lbl-desc').textContent = isOferece ? 'Currículo resumido' : 'Descrição da vaga';
+  document.getElementById('f-desc').placeholder = isOferece
+    ? 'Ex: 8 anos de experiência em projetos residenciais, atendo reformas e construções novas.'
+    : 'Ex: Vaga para pintor de parede, serviço de 3 dias, pagamento à vista.';
+  document.getElementById('submit-btn').textContent = isOferece ? 'Publicar no mapa' : 'Publicar vaga';
+}
+
+const CEP_MIN = 17900000;
+const CEP_MAX = 17919999;
+
+function isDracenaCep(cleanCep){
+  const n = parseInt(cleanCep, 10);
+  return n >= CEP_MIN && n <= CEP_MAX;
+}
+
+function positionFromCep(cleanCep){
+  const n = parseInt(cleanCep, 10) - CEP_MIN;
+  const gridSize = 40;
+  const col = n % gridSize;
+  const row = Math.floor(n / gridSize) % gridSize;
+  const latSpan = 0.028;
+  const lngSpan = 0.034;
+  const lat = DRACENA_CENTER[0] - latSpan/2 + (row/gridSize) * latSpan;
+  const lng = DRACENA_CENTER[1] - lngSpan/2 + (col/gridSize) * lngSpan;
+  return { lat: jitter(lat), lng: jitter(lng) };
+}
+
+async function submitListing(){
+  const profissao = document.getElementById('f-profissao').value.trim();
+  const nome = document.getElementById('f-nome').value.trim();
+  const tel = document.getElementById('f-tel').value.trim();
+  const cep = document.getElementById('f-cep').value.trim();
+  const desc = document.getElementById('f-desc').value.trim();
+  const instagramRaw = document.getElementById('f-instagram').value;
+  const errEl = document.getElementById('form-error');
+  const cepStatus = document.getElementById('cep-status');
+  const btn = document.getElementById('submit-btn');
+
+  errEl.textContent = '';
+  cepStatus.textContent = '';
+  cepStatus.className = '';
+
+  if(!profissao || !nome || digitsOnly(tel).length < 10 || !desc){
+    errEl.textContent = 'Preencha profissão, nome, telefone e descrição.';
+    return;
+  }
+  const cleanCep = digitsOnly(cep);
+  if(cleanCep.length !== 8){
+    errEl.textContent = 'CEP inválido. Digite os 8 números do CEP.';
+    return;
+  }
+  if(!isDracenaCep(cleanCep)){
+    cepStatus.textContent = 'Esse CEP não pertence a Dracena-SP (faixa válida: 17900-000 a 17919-999). Este site é exclusivo para a cidade.';
+    cepStatus.className = 'status-line error';
+    return;
+  }
+  const instagram = sanitizeInstagram(instagramRaw);
+  if(instagramRaw.trim() && !instagram){
+    errEl.textContent = 'Instagram inválido. Use só letras, números, ponto e "_", sem @ (até 30 caracteres).';
+    return;
+  }
+
+  const submitTipo = currentTipo;
+  const editing = editingId;
+  btn.textContent = editing ? 'Salvando...' : 'Publicando...';
+  btn.disabled = true;
+
+  const coords = positionFromCep(cleanCep);
+  const payload = {
+    tipo: submitTipo,
+    profissao, nome,
+    telefone: digitsOnly(tel),
+    cep: cleanCep,
+    descricao: desc,
+    lat: coords.lat,
+    lng: coords.lng,
+    instagram
+  };
+
+  try{
+    if(editing){
+      await editListingRemote(editing, payload);
+      const idx = listings.findIndex(l => l.id === editing);
+      if(idx !== -1) listings[idx] = { ...listings[idx], ...payload };
+    } else {
+      const serverId = await addListingRemote(payload);
+      const listing = { ...payload, id: serverId, created_at: new Date().toISOString() };
+      listings.push(listing);
+    }
+    closeForm();
+    document.getElementById('f-profissao').value = '';
+    document.getElementById('f-desc').value = '';
+    document.getElementById('f-cep').value = '';
+    document.getElementById('f-instagram').value = '';
+    renderMap();
+    const target = listings.find(l => l.id === (editing || (listings[listings.length-1] && listings[listings.length-1].id)));
+    if(target) map.setView([target.lat, target.lng], 15);
+  }catch(e){
+    errEl.textContent = (e && e.message) ? e.message : (editing
+      ? 'Não consegui salvar as alterações. Confira sua conexão e tente de novo.'
+      : 'Não consegui salvar na planilha. Confira sua conexão e tente de novo.');
+    btn.disabled = false;
+    return;
+  }
+
+  setTipo(submitTipo);
+  btn.disabled = false;
+}
+
+async function removeListing(id){
+  if(!confirm('Apagar este anúncio? Essa ação não pode ser desfeita.')) return;
+  try{
+    await deleteListingRemote(id);
+    listings = listings.filter(l => l.id !== id);
+    renderMap();
+    renderMyListings();
+  }catch(e){
+    alert((e && e.message) ? e.message : 'Não consegui apagar agora. Tente de novo em instantes.');
+  }
+}
+
+function openProfile(l){
+  document.getElementById('profile-tag').textContent = l.tipo === 'contrata' ? 'Contratando' : 'Oferece serviço';
+  document.getElementById('profile-tag').className = 'tag ' + l.tipo;
+  document.getElementById('profile-nome').textContent = l.nome;
+  document.getElementById('profile-profissao').textContent = l.profissao;
+  document.getElementById('profile-desc').textContent = l.descricao;
+  document.getElementById('profile-whatsapp').onclick = () => {
+    window.open(`https://wa.me/55${l.telefone}`, '_blank');
+  };
+  const igBtn = document.getElementById('profile-instagram');
+  const igHandle = sanitizeInstagram(l.instagram || '');
+  if(igHandle){
+    igBtn.style.display = 'flex';
+    igBtn.onclick = () => window.open(`https://instagram.com/${igHandle}`, '_blank');
+  } else {
+    igBtn.style.display = 'none';
+    igBtn.onclick = null;
+  }
+  document.getElementById('profile-overlay').style.display = 'flex';
+}
+function closeProfile(){
+  document.getElementById('profile-overlay').style.display = 'none';
+}
+</script>
+</body>
+</html>
