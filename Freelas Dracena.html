@@ -282,6 +282,35 @@
   .login-card h1{font-size:22px;margin:0 0 6px;color:var(--green-deep);}
   .login-card p{font-size:13.5px;color:var(--ink-soft);margin:0 0 22px;line-height:1.5;}
 
+  .terms-check-row{display:flex;align-items:flex-start;gap:9px;margin:16px 0;}
+  .terms-check-row input[type="checkbox"]{margin-top:2px;width:17px;height:17px;flex-shrink:0;accent-color:var(--gold);}
+  .terms-check-row label{font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
+  .terms-check-row a{color:var(--green);font-weight:600;text-decoration:underline;cursor:pointer;}
+  .terms-open-btn{
+    display:inline-block;background:none;color:var(--green);
+    border:none;padding:4px 0;font-family:'Inter';font-size:12.5px;font-weight:600;
+    cursor:pointer;text-decoration:underline;margin-top:14px;
+  }
+  #terms-overlay{z-index:2100;}
+  .terms-text{font-size:13px;color:var(--ink);line-height:1.6;}
+  .terms-text h3{font-size:14px;color:var(--green-deep);margin:18px 0 6px;}
+  .terms-text h3:first-child{margin-top:0;}
+  .terms-text p{margin:0 0 10px;}
+  .terms-text ul{margin:0 0 10px;padding-left:20px;}
+  .terms-text li{margin-bottom:4px;}
+  .terms-warn{
+    background:rgba(210,0,31,0.08);border:1.5px solid var(--brick);border-radius:10px;
+    padding:12px 14px;margin:0 0 16px;font-size:12.5px;line-height:1.6;color:var(--ink);
+  }
+  .terms-warn strong{color:var(--brick);}
+  .help-btn{
+    width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;
+    background:rgba(255,255,255,0.1);color:var(--white);font-size:15px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .help-btn:hover{background:rgba(255,255,255,0.18);}
+  .header-actions{display:flex;align-items:center;gap:8px;}
+
   ::-webkit-scrollbar{width:8px;}
   ::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
 
@@ -303,9 +332,14 @@
       <label>Telefone (WhatsApp)</label>
       <input id="login-tel" type="text" placeholder="(18) 99999-9999" />
     </div>
+    <button type="button" class="terms-open-btn" onclick="openTerms()">Ler Termos de Uso e Política de Privacidade</button>
+    <div class="terms-check-row">
+      <input type="checkbox" id="login-accept-terms" />
+      <label for="login-accept-terms">Li e aceito os Termos de Uso e a Política de Privacidade.</label>
+    </div>
     <div class="status-line error" id="login-error"></div>
     <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Entrar</button>
-    <p style="font-size:11px;color:var(--ink-soft);margin:12px 0 0;text-align:center;">Seus dados ficam salvos só neste aparelho, pra não pedir de novo.</p>
+    <p style="font-size:11px;color:var(--ink-soft);margin:12px 0 0;text-align:center;">Seus dados ficam salvos só neste aparelho, pra não pedir de novo. Dúvidas? <a onclick="openHelp()" style="color:var(--green);font-weight:600;cursor:pointer;">Fale com a gente</a>.</p>
   </div>
 </div>
 
@@ -319,7 +353,10 @@
           <small>Dracena • SP</small>
         </div>
       </div>
-      <button class="header-profile-btn" onclick="openAccountPanel()" aria-label="Perfil">👤</button>
+      <div class="header-actions">
+        <button class="help-btn" onclick="openHelp()" aria-label="Ajuda">❓</button>
+        <button class="header-profile-btn" onclick="openAccountPanel()" aria-label="Perfil">👤</button>
+      </div>
     </header>
 
     <div id="map-wrap">
@@ -464,8 +501,88 @@
       <div class="a-label" style="margin-top:18px">Meus anúncios</div>
       <p style="font-size:11.5px;color:var(--ink-soft);margin:2px 0 8px;">Todo anúncio é grátis por 30 dias. Depois disso, some do mapa e precisa ser refeito — a menos que peça pra deixar permanente.</p>
       <div class="suggestions-list" id="my-listings" style="margin-top:8px"></div>
-      <div class="submit-row" style="margin-top:22px">
+      <div class="submit-row" style="margin-top:22px;gap:8px;">
+        <button class="btn btn-secondary" style="width:100%" onclick="openTerms()">Termos</button>
+        <button class="btn btn-secondary" style="width:100%" onclick="openHelp()">Ajuda</button>
+      </div>
+      <div class="submit-row" style="margin-top:8px">
         <button class="btn btn-secondary" style="width:100%" onclick="logout()">Sair</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="terms-overlay" style="display:none">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <div>
+        <h2>Termos de Uso e Política de Privacidade</h2>
+        <p>Freelas Dracena — última atualização: agosto de 2026</p>
+      </div>
+      <button class="modal-close" onclick="closeTerms()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="terms-text">
+        <div class="terms-warn">
+          <strong>AVISO IMPORTANTE — LEIA ANTES DE CONTINUAR:</strong> o Freelas Dracena é <strong>apenas um mural/mapa que exibe anúncios cadastrados pelos próprios usuários</strong> (nome, telefone, profissão e descrição). Nós não verificamos, não aprovamos, não garantimos e não nos responsabilizamos por nenhuma informação publicada, nem por nada que aconteça entre as pessoas que se contatam a partir daqui — incluindo golpes, fraudes, roubo, furto, calote, serviço mal feito, dano moral, dano material, acidente ou qualquer outro prejuízo. <strong>O uso é inteiramente por sua conta e risco.</strong>
+        </div>
+
+        <h3>1. O que é o Freelas Dracena</h3>
+        <p>O Freelas Dracena é um mural digital gratuito e automatizado que exibe, num mapa, anúncios cadastrados livremente pelos próprios usuários de Dracena-SP. <strong>Nós não criamos, não escrevemos, não selecionamos, não verificamos e não endossamos nenhum anúncio</strong> — apenas fornecemos a ferramenta para que as pessoas publiquem e se encontrem. Não somos agência de empregos, não somos plataforma de emprego formal, não somos parte, testemunha, fiador ou intermediário de nenhuma negociação, contratação, prestação de serviço ou pagamento feito entre os usuários. Não existe vínculo empregatício, comercial ou de qualquer natureza entre o Freelas Dracena e os usuários que se cadastram ou se contatam pela plataforma.</p>
+
+        <h3>2. Quem pode usar e responsabilidade pelo cadastro</h3>
+        <p>É preciso ter 18 anos ou mais para se cadastrar. Ao aceitar estes Termos, você declara, sob sua exclusiva responsabilidade, que tem idade suficiente e que todas as informações fornecidas (nome, telefone, CEP, descrição, Instagram) são verdadeiras e de sua titularidade. <strong>Você é o único e exclusivo responsável, civil, penal e administrativamente, por tudo o que publica</strong> e por qualquer uso indevido, falso, enganoso ou ilegal do seu cadastro. Caso o Freelas Dracena identifique ou receba indício de dado falso, uso por menor de idade ou cadastro em nome de terceiro, o anúncio e/ou o acesso poderão ser excluídos automaticamente, a qualquer momento e sem aviso prévio, sem prejuízo das demais medidas cabíveis.</p>
+
+        <h3>3. Isenção total de responsabilidade sobre o conteúdo e os contatos</h3>
+        <p>É expressamente proibido publicar conteúdo falso, enganoso, ofensivo, discriminatório, ilegal, golpes, spam ou qualquer conteúdo que viole direitos de terceiros — mas o Freelas Dracena <strong>não tem obrigação de checar previamente nenhum anúncio</strong> antes de ele aparecer no mapa. Nos termos do <strong>art. 19 da Lei 12.965/2014 (Marco Civil da Internet)</strong>, o Freelas Dracena, como provedor de aplicação, somente poderá ser responsabilizado por conteúdo gerado por usuário caso, após ordem judicial específica determinando a remoção, não a cumpra no prazo determinado. Podemos, mesmo assim, remover qualquer anúncio a nosso exclusivo critério, a qualquer momento e sem aviso prévio.</p>
+
+        <h3>4. Nenhuma verificação de identidade ou idoneidade</h3>
+        <p><strong>Não verificamos identidade, antecedentes criminais, qualificação profissional, CNPJ/MEI, endereço ou veracidade de nenhuma informação de nenhum usuário.</strong> Não garantimos que a pessoa é quem diz ser, nem que vai cumprir o que promete. Qualquer contato, encontro, negociação, pagamento ou serviço realizado a partir de um anúncio visto aqui é feito inteiramente por conta e risco dos envolvidos, fora da plataforma (via WhatsApp ou Instagram), sem qualquer participação, mediação ou responsabilidade do Freelas Dracena.</p>
+
+        <h3>5. Isenção de responsabilidade por golpes, fraudes e prejuízos</h3>
+        <p>Se você sofrer qualquer tipo de golpe, fraude, calote, roubo, dano material, dano moral, dano corporal, prejuízo financeiro ou qualquer outro tipo de prejuízo decorrente de um contato, negociação, encontro ou serviço originado a partir de um anúncio visto no Freelas Dracena, <strong>você reconhece que o Freelas Dracena e seu(s) responsável(is) não têm qualquer responsabilidade, direta ou indireta, sobre o ocorrido</strong>, e você não poderá exigir indenização, reembolso ou reparação do Freelas Dracena por esse motivo. O canal de suporte (freelasdracena@gmail.com) existe apenas para reportar anúncios e pedir remoção de dados — não para mediar conflitos, reembolsos ou disputas entre usuários.</p>
+
+        <h3>6. Indenização ao Freelas Dracena</h3>
+        <p>Você concorda em indenizar e isentar o Freelas Dracena e seu(s) responsável(is) de qualquer reclamação, processo, multa, custo ou despesa (inclusive honorários advocatícios) decorrente de: (a) conteúdo que você publicou; (b) uso indevido da plataforma por você; (c) violação destes Termos; ou (d) qualquer negociação, contato ou prejuízo envolvendo você e outro usuário.</p>
+
+        <h3>7. Dados que coletamos (LGPD)</h3>
+        <p>Coletamos: nome, telefone (WhatsApp), CEP e descrição do serviço/vaga, e opcionalmente usuário do Instagram — todos fornecidos voluntariamente por você, com a finalidade única de exibir seu anúncio publicamente no mapa. O CEP gera apenas uma posição aproximada (com deslocamento aleatório). Ao publicar um anúncio, você está ciente de que <strong>seu nome e telefone ficam públicos e visíveis a qualquer pessoa</strong> que acessar o site, inclusive fora de Dracena-SP. Os dados ficam armazenados em planilha Google (Google Sheets/Apps Script), nosso operador técnico. Não vendemos dados a terceiros para publicidade.</p>
+
+        <h3>8. Armazenamento no seu aparelho e segurança do acesso</h3>
+        <p>Guardamos localmente no seu navegador (localStorage) seu nome, telefone e um código de permissão para editar/apagar seus próprios anúncios. Esse código funciona como sua credencial de acesso: é pessoal, e é responsabilidade exclusiva do usuário manter seu aparelho e navegador protegidos (senha de tela, antivírus, não compartilhar o dispositivo com desconhecidos). <strong>O Freelas Dracena não se responsabiliza por qualquer dano decorrente do uso do seu aparelho ou navegador por terceiros</strong>, nem por ataques, invasões ou softwares maliciosos (vírus, malware) instalados no seu dispositivo por qualquer motivo. Perder esse armazenamento (ex: limpar o navegador, trocar de aparelho) significa perder o controle automático sobre o anúncio; nesse caso, a remoção pode ser solicitada por e-mail, mediante confirmação de titularidade.</p>
+
+        <h3>9. Proibição de coleta automatizada de dados</h3>
+        <p>É proibido usar robôs, scrapers, crawlers ou qualquer ferramenta automatizada para coletar, copiar ou monitorar em massa os anúncios, telefones ou dados exibidos no mapa, bem como reproduzir o site ou seu conteúdo em outro domínio ou aplicativo, sem autorização expressa do Freelas Dracena. O uso da plataforma para fins de spam, revenda de contatos ou prospecção comercial não autorizada também é proibido.</p>
+
+        <h3>10. Duração dos anúncios e exclusão</h3>
+        <p>Todo anúncio expira em 30 dias e some do mapa automaticamente, salvo se marcado como permanente. Você pode apagar seu próprio anúncio a qualquer momento. Você também pode solicitar por e-mail a exclusão completa dos seus dados, correção de informações ou esclarecimentos, para <strong>freelasdracena@gmail.com</strong>.</p>
+
+        <h3>11. Uso futuro de Inteligência Artificial</h3>
+        <p>O Freelas Dracena pode, no futuro, incorporar recursos de inteligência artificial (por exemplo: busca, sugestão de categorias, moderação automática de conteúdo, respostas automáticas). Dados anonimizados ou agregados poderão ser usados para viabilizar esses recursos. Isso não altera as isenções de responsabilidade previstas nestes Termos: eventual uso de IA é uma ferramenta de suporte, e o Freelas Dracena continua sem qualquer responsabilidade sobre o conteúdo publicado pelos usuários ou sobre negociações entre eles.</p>
+
+        <h3>12. Nenhuma garantia sobre a plataforma</h3>
+        <p>A plataforma é fornecida "como está" e "conforme disponível", sem qualquer garantia de funcionamento contínuo, ausência de erros, exatidão das informações exibidas ou disponibilidade de serviços de terceiros usados no site (mapas OpenStreetMap, Google Sheets/Apps Script, WhatsApp, Instagram). O Freelas Dracena não se responsabiliza por indisponibilidade, instabilidade, perda de dados, ataques de hackers, invasões, códigos maliciosos ou qualquer falha técnica, nem por decisões tomadas com base nas informações exibidas no mapa. Também não nos responsabilizamos por danos decorrentes de culpa exclusiva de terceiros ou do próprio usuário, como quando ele mesmo compartilha seus dados de forma indevida.</p>
+
+        <h3>13. Limite máximo de responsabilidade</h3>
+        <p>Em nenhuma hipótese o Freelas Dracena será responsável por danos diretos, indiretos, emergentes, incidentais, morais, materiais ou lucros cessantes decorrentes de qualquer forma de uso da plataforma, <strong>ainda que previamente avisado sobre a possibilidade de tais danos</strong>. Caso, apesar de todo o disposto nestes Termos, seja reconhecida judicialmente alguma responsabilidade do Freelas Dracena, essa responsabilidade fica limitada, no máximo, ao valor efetivamente pago pelo usuário ao Freelas Dracena pelo uso da plataforma — sendo o serviço gratuito, esse valor é R$ 0,00 (zero reais).</p>
+
+        <h3>14. Alterações destes termos</h3>
+        <p>Podemos atualizar estes Termos a qualquer momento. O uso continuado da plataforma após alterações significa que você concorda com a versão atualizada.</p>
+
+        <h3>15. Suspensão e cancelamento de acesso</h3>
+        <p>O Freelas Dracena poderá, a seu exclusivo critério e a qualquer momento, sem necessidade de aviso prévio, suspender, cancelar ou interromper o acesso de qualquer usuário à plataforma, especialmente diante de suspeita de fraude, golpe, dado falso, uso indevido ou descumprimento destes Termos — sem prejuízo do encaminhamento do caso às autoridades competentes, quando cabível.</p>
+
+        <h3>16. Nulidade parcial</h3>
+        <p>Caso qualquer disposição destes Termos seja considerada inválida ou inexequível, isso não afetará a validade das demais cláusulas, que permanecerão em pleno vigor. A disposição inválida será substituída, sempre que possível, por outra que reflita a mesma intenção original de proteção ao Freelas Dracena.</p>
+
+        <h3>17. Não renúncia</h3>
+        <p>O fato de o Freelas Dracena não exercer imediatamente algum direito previsto nestes Termos não significa renúncia a esse direito, podendo exercê-lo a qualquer momento posterior.</p>
+
+        <h3>18. Lei aplicável e foro</h3>
+        <p>Estes Termos são regidos pelas leis brasileiras, incluindo a LGPD (Lei 13.709/2018) e o Marco Civil da Internet (Lei 12.965/2014). Fica eleito o foro da comarca de Dracena-SP para dirimir eventuais controvérsias, com renúncia a qualquer outro, por mais privilegiado que seja.</p>
+
+        <h3>19. Contato</h3>
+        <p>Denúncia de anúncio, solicitação sobre seus dados ou dúvidas: <strong>freelasdracena@gmail.com</strong>. Reforçando: este canal não serve para mediar disputas, reembolsos ou prejuízos entre usuários.</p>
       </div>
     </div>
   </div>
@@ -703,9 +820,27 @@ function enterApp(nome, tel){
   initMap();
 }
 
+function openTerms(){
+  document.getElementById('terms-overlay').style.display = 'flex';
+}
+function closeTerms(){
+  document.getElementById('terms-overlay').style.display = 'none';
+}
+function openHelp(){
+  const subject = encodeURIComponent('Ajuda - Freelas Dracena');
+  const body = encodeURIComponent('Olá! Preciso de ajuda com o Freelas Dracena.\n\nDescreva aqui sua dúvida, sugestão ou denúncia:\n');
+  const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=freelasdracena@gmail.com&su=${subject}&body=${body}`;
+  const win = window.open(gmailUrl, '_blank');
+  if(!win){
+    // pop-up bloqueado pelo navegador: usa o cliente de e-mail padrão do aparelho
+    window.location.href = `mailto:freelasdracena@gmail.com?subject=${subject}&body=${body}`;
+  }
+}
+
 function doLogin(){
   const nome = document.getElementById('login-nome').value.trim();
   const tel = document.getElementById('login-tel').value.trim();
+  const aceitou = document.getElementById('login-accept-terms').checked;
   const err = document.getElementById('login-error');
   if(nome.split(' ').filter(Boolean).length < 2){
     err.textContent = 'Digite nome e sobrenome.';
@@ -715,8 +850,13 @@ function doLogin(){
     err.textContent = 'Digite um telefone válido com DDD.';
     return;
   }
+  if(!aceitou){
+    err.textContent = 'Você precisa aceitar os Termos de Uso e a Política de Privacidade para continuar.';
+    return;
+  }
   err.textContent = '';
   saveRememberedUser(nome, tel);
+  try{ localStorage.setItem('mapaTrabalho_termsAcceptedAt', new Date().toISOString()); }catch(e){}
   enterApp(nome, tel);
 }
 function logout(){
@@ -731,8 +871,14 @@ function logout(){
 
 (function tryAutoLogin(){
   const remembered = loadRememberedUser();
-  if(remembered && remembered.nome && remembered.tel){
+  let termsAcceptedAt = null;
+  try{ termsAcceptedAt = localStorage.getItem('mapaTrabalho_termsAcceptedAt'); }catch(e){}
+  if(remembered && remembered.nome && remembered.tel && termsAcceptedAt){
     enterApp(remembered.nome, remembered.tel);
+  } else if(remembered && remembered.nome && remembered.tel){
+    // usuário de antes desta atualização: precisa aceitar os termos uma vez antes de continuar
+    document.getElementById('login-nome').value = remembered.nome;
+    document.getElementById('login-tel').value = remembered.tel;
   }
 })();
 
