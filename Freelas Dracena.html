@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
 <style>
   :root{
     --paper:#FAFAFA;
@@ -266,30 +266,122 @@
   .account-row .a-label{font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;margin-top:10px;}
   .account-row .a-value{font-size:15px;font-weight:600;color:var(--green-deep);}
 
+  /* ============ TELA DE LOGIN — "mural de avisos" ============ */
   #login-screen{
-    position:fixed;inset:0;background:var(--green-deep);z-index:2000;
-    display:flex;align-items:center;justify-content:center;padding:20px;
+    --l-soil:#211710;
+    --l-soil-2:#150E09;
+    --l-cotton:#FBF7EE;
+    --l-ochre:#D3922F;
+    --l-ochre-deep:#B3781F;
+    --l-thread: rgba(211,146,47,0.4);
+    --l-ink:#271B10;
+    --l-ink-soft:#6E5F4C;
+
+    position:fixed;inset:0;z-index:2000;
+    background:
+      radial-gradient(circle at 12% -8%, rgba(211,146,47,0.20), transparent 52%),
+      radial-gradient(circle at 100% 6%, rgba(122,92,63,0.22), transparent 46%),
+      linear-gradient(180deg, var(--l-soil) 0%, var(--l-soil-2) 100%);
+    display:flex;flex-direction:column;
+    overflow-y:auto;-webkit-overflow-scrolling:touch;
   }
-  .login-card{
-    background:var(--paper);border-radius:20px;max-width:380px;width:100%;padding:32px 28px;
-    box-shadow:0 20px 60px rgba(0,0,0,0.35);
+
+  .login-hero{position:relative;padding:44px 22px 30px;flex-shrink:0;}
+  .login-eyebrow{
+    display:flex;align-items:center;gap:10px;margin-bottom:26px;
+  }
+  .login-eyebrow span{
+    font-family:'Space Grotesk';font-weight:700;font-size:12.5px;letter-spacing:.08em;
+    color:rgba(251,247,238,0.62);text-transform:uppercase;
   }
   .login-mark{
-    width:44px;height:44px;border-radius:12px;background:var(--gold);
-    display:flex;align-items:center;justify-content:center;color:var(--white);
-    font-weight:700;font-size:20px;margin-bottom:16px;
+    width:38px;height:38px;border-radius:10px;flex-shrink:0;
+    background:linear-gradient(155deg, var(--l-ochre), var(--l-ochre-deep));
+    display:flex;align-items:center;justify-content:center;color:#221304;
+    font-weight:700;font-size:14.5px;box-shadow:0 4px 14px rgba(211,146,47,0.35);
   }
-  .login-card h1{font-size:22px;margin:0 0 6px;color:var(--green-deep);}
-  .login-card p{font-size:13.5px;color:var(--ink-soft);margin:0 0 22px;line-height:1.5;}
+  .login-hero h1{
+    font-size:32px;line-height:1.14;letter-spacing:-0.01em;
+    color:var(--l-cotton);margin:0 0 12px;max-width:320px;
+  }
+  .login-hero .login-tagline{
+    font-family:'Lora',serif;font-style:italic;font-weight:500;font-size:15.5px;
+    color:rgba(251,247,238,0.72);margin:0 0 26px;max-width:300px;line-height:1.5;
+  }
+  .pin-row{display:flex;flex-wrap:wrap;gap:11px 9px;}
+  .pin-chip{
+    font-family:'Inter';font-size:12.5px;font-weight:600;color:var(--l-ink);
+    background:var(--l-cotton);padding:8px 14px 8px 22px;border-radius:6px;position:relative;
+    box-shadow:0 8px 16px rgba(0,0,0,0.3);
+  }
+  .pin-chip::before{
+    content:'';position:absolute;left:8px;top:50%;transform:translateY(-50%);
+    width:6px;height:6px;border-radius:50%;background:var(--l-ochre-deep);
+  }
+  .pin-chip:nth-child(1){transform:rotate(-3deg);}
+  .pin-chip:nth-child(2){transform:rotate(2deg);}
+  .pin-chip:nth-child(3){transform:rotate(-1.5deg);}
+
+  .stitch-divider{border:none;height:0;border-top:2px dashed var(--l-thread);margin:0 22px;}
+
+  .login-panel{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:26px 18px 44px;}
+  .login-card{
+    background:var(--l-cotton);border-radius:18px;max-width:400px;width:100%;padding:26px 24px 28px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.3);
+  }
+  .trust-row{display:flex;gap:8px;margin-bottom:20px;}
+  .trust-item{
+    flex:1;text-align:center;font-size:10.8px;font-weight:600;color:var(--l-ink-soft);
+    line-height:1.35;background:rgba(211,146,47,0.08);border-radius:10px;padding:10px 4px;
+  }
+  .trust-item .ti-icon{display:block;font-size:17px;margin-bottom:5px;}
+
+  #login-screen .field label{color:var(--l-ink);}
+  #login-screen .field input{
+    border-color:rgba(39,27,16,0.16);color:var(--l-ink);background:#fff;
+  }
+  #login-screen .field input::placeholder{color:#B7A88F;}
+  #login-screen .field input:focus{
+    border-color:var(--l-ochre-deep);box-shadow:0 0 0 3px rgba(211,146,47,0.22);
+  }
+  #login-screen .status-line{color:var(--l-ink-soft);}
+  #login-screen .status-line.error{color:#B3261E;}
+
+  .login-cta{
+    width:100%;border:none;border-radius:12px;padding:15px;margin-top:2px;
+    background:linear-gradient(135deg, var(--l-ochre) 0%, var(--l-ochre-deep) 100%);
+    color:#221304;font-family:'Space Grotesk';font-weight:700;font-size:15px;letter-spacing:.01em;
+    display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;
+    box-shadow:0 10px 22px rgba(211,146,47,0.35);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .login-cta:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(211,146,47,0.42);}
+  .login-cta:active{transform:scale(0.98);}
+  .login-cta .cta-arrow{transition:transform .15s ease;}
+  .login-cta:hover .cta-arrow{transform:translateX(3px);}
+
+  .login-footnote{font-size:11.5px;color:var(--l-ink-soft);margin:14px 0 0;text-align:center;line-height:1.5;}
+  .login-footnote a{
+    color:var(--l-ochre-deep);font-weight:600;cursor:pointer;text-decoration:none;
+    border-bottom:1px solid rgba(179,120,31,0.4);
+  }
 
   .terms-check-row{display:flex;align-items:flex-start;gap:9px;margin:16px 0;}
-  .terms-check-row input[type="checkbox"]{margin-top:2px;width:17px;height:17px;flex-shrink:0;accent-color:var(--gold);}
-  .terms-check-row label{font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
-  .terms-check-row a{color:var(--green);font-weight:600;text-decoration:underline;cursor:pointer;}
+  .terms-check-row input[type="checkbox"]{margin-top:2px;width:17px;height:17px;flex-shrink:0;accent-color:var(--l-ochre-deep);}
+  .terms-check-row label{font-size:12.5px;color:var(--l-ink-soft);line-height:1.5;}
+  .terms-check-row a{color:var(--l-ochre-deep);font-weight:600;text-decoration:underline;cursor:pointer;}
   .terms-open-btn{
-    display:inline-block;background:none;color:var(--green);
+    display:inline-block;background:none;color:var(--l-ochre-deep);
     border:none;padding:4px 0;font-family:'Inter';font-size:12.5px;font-weight:600;
-    cursor:pointer;text-decoration:underline;margin-top:14px;
+    cursor:pointer;text-decoration:underline;margin-top:2px;
+  }
+
+  @media (min-width: 640px){
+    .login-hero{padding:60px 40px 34px;}
+    .login-hero h1{font-size:38px;max-width:380px;}
+    .login-hero .login-tagline{max-width:360px;}
+    .login-panel{padding:34px 40px 56px;}
+    .login-card{max-width:440px;padding:32px 32px 34px;}
   }
   #terms-overlay{z-index:2100;}
   .terms-text{font-size:13px;color:var(--ink);line-height:1.6;}
@@ -320,26 +412,46 @@
 <body>
 
 <div id="login-screen">
-  <div class="login-card">
-    <div class="login-mark">DT</div>
-    <h1>Freelas Dracena</h1>
-    <p>Uma rede local de Dracena-SP para quem procura trabalho e quem está contratando. Sem chat, sem enrolação — só perfil, mapa e WhatsApp.</p>
-    <div class="field">
-      <label>Nome e sobrenome</label>
-      <input id="login-nome" type="text" placeholder="Ex: Alexandre Andrade" />
+  <div class="login-hero">
+    <div class="login-eyebrow">
+      <div class="login-mark">DT</div>
+      <span>Dracena · SP</span>
     </div>
-    <div class="field">
-      <label>Telefone (WhatsApp)</label>
-      <input id="login-tel" type="text" placeholder="(18) 99999-9999" />
+    <h1>O mural de trabalho da nossa cidade.</h1>
+    <p class="login-tagline">Quem precisa de um serviço encontra. Quem faz um bom trabalho aparece.</p>
+    <div class="pin-row">
+      <span class="pin-chip">Eletricista</span>
+      <span class="pin-chip">Diarista</span>
+      <span class="pin-chip">Pedreiro</span>
     </div>
-    <button type="button" class="terms-open-btn" onclick="openTerms()">Ler Termos de Uso e Política de Privacidade</button>
-    <div class="terms-check-row">
-      <input type="checkbox" id="login-accept-terms" />
-      <label for="login-accept-terms">Li e aceito os Termos de Uso e a Política de Privacidade.</label>
+  </div>
+
+  <hr class="stitch-divider" />
+
+  <div class="login-panel">
+    <div class="login-card">
+      <div class="trust-row">
+        <div class="trust-item"><span class="ti-icon">📍</span>Só gente de Dracena-SP</div>
+        <div class="trust-item"><span class="ti-icon">🗺️</span>Tudo no mapa da cidade</div>
+        <div class="trust-item"><span class="ti-icon">🤝</span>Contato direto, sem intermediário</div>
+      </div>
+      <div class="field">
+        <label>Nome e sobrenome</label>
+        <input id="login-nome" type="text" placeholder="Ex: Alexandre Andrade" />
+      </div>
+      <div class="field">
+        <label>Telefone (WhatsApp)</label>
+        <input id="login-tel" type="text" placeholder="(18) 99999-9999" />
+      </div>
+      <button type="button" class="terms-open-btn" onclick="openTerms()">Ler Termos de Uso e Política de Privacidade</button>
+      <div class="terms-check-row">
+        <input type="checkbox" id="login-accept-terms" />
+        <label for="login-accept-terms">Li e aceito os Termos de Uso e a Política de Privacidade.</label>
+      </div>
+      <div class="status-line error" id="login-error"></div>
+      <button type="button" class="login-cta" onclick="doLogin()">Entrar no mural <span class="cta-arrow">→</span></button>
+      <p class="login-footnote">Seus dados ficam salvos só neste aparelho, pra não pedir de novo. Dúvidas? <a onclick="openHelp()">Fale com a gente</a>.</p>
     </div>
-    <div class="status-line error" id="login-error"></div>
-    <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Entrar</button>
-    <p style="font-size:11px;color:var(--ink-soft);margin:12px 0 0;text-align:center;">Seus dados ficam salvos só neste aparelho, pra não pedir de novo. Dúvidas? <a onclick="openHelp()" style="color:var(--green);font-weight:600;cursor:pointer;">Fale com a gente</a>.</p>
   </div>
 </div>
 
